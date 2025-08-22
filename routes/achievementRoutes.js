@@ -1,9 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const controller = require('../controllers/achievementController');
+import express from 'express';
+import controller from '../controllers/achievementController.js';
 
+const router = express.Router();
 
 router.get('/', controller.getAchievements);
 router.post('/',controller.addAchievement);
 
-module.exports = router;
+export default router;

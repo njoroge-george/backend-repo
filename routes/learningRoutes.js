@@ -1,7 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const learningController = require('../controllers/learningController');
+import express from 'express';
 
+import learningController from '../controllers/learningController.js';
+
+const router = express.Router();
 // Courses
 router.get('/courses', learningController.getCourses);
 router.post('/courses', learningController.createCourse);
@@ -26,4 +27,4 @@ router.post('/practice-logs', learningController.createPracticeLog);
 router.put('/practice-logs/:id', learningController.updatePracticeLog);
 router.delete('/practice-logs/:id', learningController.deletePracticeLog);
 
-module.exports = router;
+export default router;

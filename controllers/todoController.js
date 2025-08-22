@@ -1,9 +1,8 @@
 // controllers/todoController.js
-const Todo = require('../models/todo');
-const { Op } = require('sequelize');
+import Todo from '../models/todo.js';
+import { Op } from 'sequelize';
 
-// Get all todos (with optional filter query ?status=&priority=&q=)
-exports.getTodos = async (req, res) => {
+const getTodos = async (req, res) => {
   try {
     const where = {};
     const { status, priority, q } = req.query;
@@ -24,8 +23,7 @@ exports.getTodos = async (req, res) => {
   }
 };
 
-// Get one todo
-exports.getTodoById = async (req, res) => {
+const getTodoById = async (req, res) => {
   try {
     const todo = await Todo.findByPk(req.params.id);
     if (!todo) return res.status(404).json({ error: 'Todo not found' });
@@ -36,8 +34,7 @@ exports.getTodoById = async (req, res) => {
   }
 };
 
-// Create
-exports.createTodo = async (req, res) => {
+const createTodo = async (req, res) => {
   try {
     const { title, details, priority, due_date, status } = req.body;
     const newTodo = await Todo.create({
@@ -54,8 +51,7 @@ exports.createTodo = async (req, res) => {
   }
 };
 
-// Update
-exports.updateTodo = async (req, res) => {
+const updateTodo = async (req, res) => {
   try {
     const todo = await Todo.findByPk(req.params.id);
     if (!todo) return res.status(404).json({ error: 'Todo not found' });
@@ -75,8 +71,7 @@ exports.updateTodo = async (req, res) => {
   }
 };
 
-// Delete
-exports.deleteTodo = async (req, res) => {
+const deleteTodo = async (req, res) => {
   try {
     const todo = await Todo.findByPk(req.params.id);
     if (!todo) return res.status(404).json({ error: 'Todo not found' });
@@ -86,4 +81,12 @@ exports.deleteTodo = async (req, res) => {
     console.error('Error deleting todo:', err);
     res.status(500).json({ error: 'Failed to delete todo' });
   }
+};
+
+export default {
+  getTodos,
+  getTodoById,
+  createTodo,
+  updateTodo,
+  deleteTodo
 };

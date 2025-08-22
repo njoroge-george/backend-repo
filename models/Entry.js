@@ -1,6 +1,5 @@
-// models/Entry.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db'); // your configured Sequelize instance
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 const Entry = sequelize.define('Entry', {
     type: {
@@ -27,4 +26,4 @@ const Entry = sequelize.define('Entry', {
     timestamps: false,
 });
 
-module.exports = Entry;
+export default Entry;

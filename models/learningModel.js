@@ -1,6 +1,6 @@
 // models/learningModel.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 // Courses Table
 const Course = sequelize.define('Course', {
@@ -61,7 +61,7 @@ const PracticeLog = sequelize.define('PracticeLog', {
 });
 
 // Export all in one object
-module.exports = {
+export {
     Course,
     Resource,
     Achievement,

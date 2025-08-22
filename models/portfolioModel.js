@@ -1,6 +1,6 @@
-// models/portfolio.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+// backend-repo/models/portfolioModel.js
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 const Portfolio = sequelize.define('Portfolio', {
   name: {
@@ -28,4 +28,4 @@ const Portfolio = sequelize.define('Portfolio', {
   timestamps: false
 });
 
-module.exports = Portfolio;
+export default Portfolio;

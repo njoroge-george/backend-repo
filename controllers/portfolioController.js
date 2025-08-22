@@ -1,8 +1,7 @@
 // controllers/portfolioController.js
-const Portfolio = require('../models/portfolioModel');
+import Portfolio from '../models/portfolioModel.js';
 
-// Get portfolio data
-exports.getPortfolio = async (req, res) => {
+const getPortfolio = async (req, res) => {
   try {
     const data = await Portfolio.findAll();
     res.json(data);
@@ -11,8 +10,7 @@ exports.getPortfolio = async (req, res) => {
   }
 };
 
-// Create portfolio entry
-exports.createPortfolio = async (req, res) => {
+const createPortfolio = async (req, res) => {
   try {
     const { name, title, bio, skills, projects, contact_email } = req.body;
     const newPortfolio = await Portfolio.create({
@@ -27,4 +25,9 @@ exports.createPortfolio = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+export default {
+  getPortfolio,
+  createPortfolio
 };

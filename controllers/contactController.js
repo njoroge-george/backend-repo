@@ -1,7 +1,7 @@
 // controllers/contactController.js
-const { validationResult } = require('express-validator');
-const Contact = require('../models/contactModel');
-const Communication = require('../models/communicationModel');
+import { validationResult } from 'express-validator';
+import Contact from '../models/contactModel.js';
+import Communication from '../models/communicationModel.js';
 
 const ContactController = {
   // Create contact
@@ -185,4 +185,4 @@ const ContactController = {
   }
 };
 
-module.exports = ContactController;
+export default ContactController;

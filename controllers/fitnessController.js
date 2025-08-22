@@ -1,6 +1,6 @@
-const Fitness = require('../models/Fitness');
+import Fitness from '../models/Fitness.js';
 
-exports.getAllFitnessEntries = async (req, res) => {
+ const getAllFitnessEntries = async (req, res) => {
     try {
         const entries = await Fitness.findAll();
         res.json(entries);
@@ -10,7 +10,7 @@ exports.getAllFitnessEntries = async (req, res) => {
     }
 };
 
-exports.createFitnessEntry = async (req, res) => {
+ const createFitnessEntry = async (req, res) => {
     const { workout_type, duration, workout_date, calories, reps, date, name } = req.body;
     try {
         const entry = await Fitness.create({
@@ -29,7 +29,7 @@ exports.createFitnessEntry = async (req, res) => {
     }
 };
 
-exports.deleteFitnessEntry = async (req, res) => {
+ const deleteFitnessEntry = async (req, res) => {
     const { id } = req.params;
     try {
         const deleted = await Fitness.destroy({ where: { id } });
@@ -42,3 +42,9 @@ exports.deleteFitnessEntry = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete fitness entry' });
     }
 };
+
+ export default {
+    getAllFitnessEntries,
+    createFitnessEntry,
+    deleteFitnessEntry
+ };

@@ -1,8 +1,8 @@
 // controllers/learningController.js
-const { Course, Resource, Achievement, PracticeLog } = require('../models/learningModel');
+import { Course, Resource, Achievement, PracticeLog } from '../models/learningModel.js';
 
 // --- COURSES ---
-exports.getCourses = async (req, res) => {
+const getCourses = async (req, res) => {
   try {
     const courses = await Course.findAll();
     res.json(courses);
@@ -12,7 +12,7 @@ exports.getCourses = async (req, res) => {
   }
 };
 
-exports.createCourse = async (req, res) => {
+const createCourse = async (req, res) => {
   try {
     const { name, description } = req.body;
     if (!name) return res.status(400).json({ error: 'Name is required' });
@@ -24,7 +24,7 @@ exports.createCourse = async (req, res) => {
   }
 };
 
-exports.updateCourse = async (req, res) => {
+const updateCourse = async (req, res) => {
   try {
     const id = req.params.id;
     const { name, description } = req.body;
@@ -37,7 +37,7 @@ exports.updateCourse = async (req, res) => {
   }
 };
 
-exports.deleteCourse = async (req, res) => {
+const deleteCourse = async (req, res) => {
   try {
     const id = req.params.id;
     await Course.destroy({ where: { id } });
@@ -49,7 +49,7 @@ exports.deleteCourse = async (req, res) => {
 };
 
 // --- ACHIEVEMENTS ---
-exports.getAchievements = async (req, res) => {
+const getAchievements = async (req, res) => {
   try {
     const achievements = await Achievement.findAll();
     res.json(achievements);
@@ -59,7 +59,7 @@ exports.getAchievements = async (req, res) => {
   }
 };
 
-exports.createAchievement = async (req, res) => {
+const createAchievement = async (req, res) => {
   try {
     const { title, description } = req.body;
     if (!title) return res.status(400).json({ error: 'Title is required' });
@@ -71,7 +71,7 @@ exports.createAchievement = async (req, res) => {
   }
 };
 
-exports.updateAchievement = async (req, res) => {
+const updateAchievement = async (req, res) => {
   try {
     const id = req.params.id;
     const { title, description } = req.body;
@@ -84,7 +84,7 @@ exports.updateAchievement = async (req, res) => {
   }
 };
 
-exports.deleteAchievement = async (req, res) => {
+const deleteAchievement = async (req, res) => {
   try {
     const id = req.params.id;
     await Achievement.destroy({ where: { id } });
@@ -96,7 +96,7 @@ exports.deleteAchievement = async (req, res) => {
 };
 
 // --- RESOURCES ---
-exports.getResources = async (req, res) => {
+const getResources = async (req, res) => {
   try {
     const resources = await Resource.findAll();
     res.json(resources);
@@ -106,7 +106,7 @@ exports.getResources = async (req, res) => {
   }
 };
 
-exports.createResource = async (req, res) => {
+const createResource = async (req, res) => {
   try {
     const { title, url } = req.body;
     if (!title || !url) return res.status(400).json({ error: 'Title and URL are required' });
@@ -118,7 +118,7 @@ exports.createResource = async (req, res) => {
   }
 };
 
-exports.updateResource = async (req, res) => {
+const updateResource = async (req, res) => {
   try {
     const id = req.params.id;
     const { title, url } = req.body;
@@ -131,7 +131,7 @@ exports.updateResource = async (req, res) => {
   }
 };
 
-exports.deleteResource = async (req, res) => {
+const deleteResource = async (req, res) => {
   try {
     const id = req.params.id;
     await Resource.destroy({ where: { id } });
@@ -143,7 +143,7 @@ exports.deleteResource = async (req, res) => {
 };
 
 // --- PRACTICE LOGS ---
-exports.getPracticeLogs = async (req, res) => {
+const getPracticeLogs = async (req, res) => {
   try {
     const practiceLogs = await PracticeLog.findAll({
       order: [['date', 'DESC']]
@@ -155,7 +155,7 @@ exports.getPracticeLogs = async (req, res) => {
   }
 };
 
-exports.createPracticeLog = async (req, res) => {
+const createPracticeLog = async (req, res) => {
   try {
     const { activity, date } = req.body;
     if (!activity || !date) return res.status(400).json({ error: 'Activity and date are required' });
@@ -167,7 +167,7 @@ exports.createPracticeLog = async (req, res) => {
   }
 };
 
-exports.updatePracticeLog = async (req, res) => {
+const updatePracticeLog = async (req, res) => {
   try {
     const id = req.params.id;
     const { activity, date } = req.body;
@@ -180,7 +180,7 @@ exports.updatePracticeLog = async (req, res) => {
   }
 };
 
-exports.deletePracticeLog = async (req, res) => {
+const deletePracticeLog = async (req, res) => {
   try {
     const id = req.params.id;
     await PracticeLog.destroy({ where: { id } });
@@ -189,4 +189,23 @@ exports.deletePracticeLog = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Error deleting practice log' });
   }
+};
+
+export default {
+  getCourses,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  getAchievements,
+  createAchievement,
+  updateAchievement,
+  deleteAchievement,
+  getResources,
+  createResource,
+  updateResource,
+  deleteResource,
+  getPracticeLogs,
+  createPracticeLog,
+  updatePracticeLog,
+  deletePracticeLog
 };

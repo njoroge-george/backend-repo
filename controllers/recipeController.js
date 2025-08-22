@@ -1,8 +1,8 @@
-// controllers/recipesController.js
-const Recipe = require('../models/recipeModel');
+// backend-repo/controllers/recipeController.js
+import Recipe from '../models/recipeModel.js';
 
 // Create a new recipe
-exports.createRecipe = async (req, res) => {
+const createRecipe = async (req, res) => {
   try {
     const { title, description, tags, stars } = req.body;
     const newRecipe = await Recipe.create({
@@ -19,7 +19,7 @@ exports.createRecipe = async (req, res) => {
 };
 
 // Get all recipes
-exports.getRecipes = async (req, res) => {
+const getRecipes = async (req, res) => {
   try {
     const recipes = await Recipe.findAll({
       order: [['created_at', 'DESC']]
@@ -32,7 +32,7 @@ exports.getRecipes = async (req, res) => {
 };
 
 // Get a single recipe by ID
-exports.getRecipeById = async (req, res) => {
+const getRecipeById = async (req, res) => {
   try {
     const recipe = await Recipe.findByPk(req.params.id);
     if (!recipe) {
@@ -46,7 +46,7 @@ exports.getRecipeById = async (req, res) => {
 };
 
 // Update recipe
-exports.updateRecipe = async (req, res) => {
+const updateRecipe = async (req, res) => {
   try {
     const { title, description, tags, stars } = req.body;
     const recipe = await Recipe.findByPk(req.params.id);
@@ -69,7 +69,7 @@ exports.updateRecipe = async (req, res) => {
 };
 
 // Delete recipe
-exports.deleteRecipe = async (req, res) => {
+const deleteRecipe = async (req, res) => {
   try {
     const recipe = await Recipe.findByPk(req.params.id);
     if (!recipe) {
@@ -81,4 +81,12 @@ exports.deleteRecipe = async (req, res) => {
     console.error("Error deleting recipe:", error);
     res.status(500).json({ error: "Failed to delete recipe" });
   }
+};
+
+export default {
+  createRecipe,
+  getRecipes,
+  getRecipeById,
+  updateRecipe,
+  deleteRecipe
 };

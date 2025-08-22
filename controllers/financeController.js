@@ -1,6 +1,6 @@
-const Entry = require('../models/Entry');
+import Entry from '../models/Entry.js';
 
-exports.saveEntry = async (req, res) => {
+ const saveEntry = async (req, res) => {
   try {
     const { type, amount, category, description, date } = req.body;
 
@@ -24,7 +24,7 @@ exports.saveEntry = async (req, res) => {
 };
 
 // Fetch all entries
-exports.getEntries = async (req, res) => {
+ const getEntries = async (req, res) => {
   try {
     const entries = await Entry.findAll({ order: [['date', 'DESC']] });
     res.json(entries);
@@ -35,7 +35,7 @@ exports.getEntries = async (req, res) => {
 };
 
 // ✅ Update an entry
-exports.updateEntry = async (req, res) => {
+ const updateEntry = async (req, res) => {
   try {
     const { id } = req.params;
     const { type, amount, category, description, date } = req.body;
@@ -61,7 +61,7 @@ exports.updateEntry = async (req, res) => {
 };
 
 // ✅ Delete an entry
-exports.deleteEntry = async (req, res) => {
+ const deleteEntry = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -77,3 +77,10 @@ exports.deleteEntry = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete entry.' });
   }
 };
+
+ export default {
+    saveEntry,
+    getEntries,
+    updateEntry,
+    deleteEntry,
+ };

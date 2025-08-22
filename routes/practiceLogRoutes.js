@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const controller = require('../controllers/practiceLogController');
+import controller from '../controllers/practiceLogController.js';
 
 
 router.get('/', controller.getLogs);
 router.post('/', controller.addLog);
 
-module.exports = router;
+export default router;

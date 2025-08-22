@@ -1,7 +1,6 @@
-const Project = require('../models/Projects');
-
+import Project from '../models/Projects.js';
 // Create project
-exports.createProject = async (req, res) => {
+ const createProject = async (req, res) => {
     try {
         const project = await Project.create(req.body);
         res.status(201).json(project);
@@ -12,7 +11,7 @@ exports.createProject = async (req, res) => {
 };
 
 // Get all projects
-exports.getAllProjects = async (req, res) => {
+ const getAllProjects = async (req, res) => {
     try {
         const projects = await Project.findAll();
         res.json(projects);
@@ -22,7 +21,7 @@ exports.getAllProjects = async (req, res) => {
 };
 
 // Get single project
-exports.getProjectById = async (req, res) => {
+ const getProjectById = async (req, res) => {
     try {
         const project = await Project.findByPk(req.params.id);
         if (!project) return res.status(404).json({ message: 'Not found' });
@@ -33,7 +32,7 @@ exports.getProjectById = async (req, res) => {
 };
 
 // Update project
-exports.updateProject = async (req, res) => {
+ const updateProject = async (req, res) => {
     try {
         const project = await Project.findByPk(req.params.id);
         if (!project) return res.status(404).json({ message: 'Not found' });
@@ -46,7 +45,7 @@ exports.updateProject = async (req, res) => {
 };
 
 // Delete project
-exports.deleteProject = async (req, res) => {
+ const deleteProject = async (req, res) => {
     try {
         const project = await Project.findByPk(req.params.id);
         if (!project) return res.status(404).json({ message: 'Not found' });
@@ -57,3 +56,11 @@ exports.deleteProject = async (req, res) => {
         res.status(500).json({ message: 'Failed to delete project' });
     }
 };
+
+ export default {
+    createProject,
+    getAllProjects,
+    getProjectById,
+    updateProject,
+    deleteProject
+ };

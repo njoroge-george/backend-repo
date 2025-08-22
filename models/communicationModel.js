@@ -1,6 +1,6 @@
 // models/communication.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 const Communication = sequelize.define('Communication', {
     id: {
@@ -45,4 +45,4 @@ const Communication = sequelize.define('Communication', {
     updatedAt: 'updated_at'
 });
 
-module.exports = Communication;
+export default Communication;

@@ -1,6 +1,6 @@
 // models/todo.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db'); // your Sequelize instance / db connection
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js'; // your Sequelize instance / db connection
 
 const Todo = sequelize.define('Todo', {
     id: {
@@ -37,4 +37,4 @@ const Todo = sequelize.define('Todo', {
     timestamps: false,
 });
 
-module.exports = Todo;
+export default Todo;

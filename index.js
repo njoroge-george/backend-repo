@@ -1,36 +1,50 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const sequelize = require('./config/db');
+// backend-repo/index.js
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import http from 'http';
+import { Server } from 'socket.io';
+import sequelize from './config/db.js';
 // Import routes
-const noteRoutes = require('./routes/noteRoutes');
-const financeRoutes = require('./routes/financeRoutes');
-const fitnessRoutes = require('./routes/fitnessRoutes');
-const projectsRoutes = require('./routes/projectsRoutes');
-const contactRoutes = require('./routes/contactRoutes');
-const settingsRoutes = require('./routes/settingsRoutes');
-const todoRoutes = require('./routes/todoRoutes');
-const learningRoutes = require('./routes/learningRoutes');
-const recipeRoutes = require('./routes/recipeRoutes');
-const portfolioRoutes = require('./routes/portfolioRoutes');
+import noteRoutes from './routes/noteRoutes.js';
+import financeRoutes from './routes/financeRoutes.js';
+import fitnessRoutes from './routes/fitnessRoutes.js';
+import projectsRoutes from './routes/projectsRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
+import todoRoutes from './routes/todoRoutes.js';
+import learningRoutes from './routes/learningRoutes.js';
+import recipeRoutes from './routes/recipeRoutes.js';
+import portfolioRoutes from './routes/portfolioRoutes.js';
+import chatRouter from './routes/chatRouter.js';
+import {
+    handleJoin,
+    handleMessage,
+    handleTyping,
+    handleDisconnect,
+} from './controllers/chatController.js';
+
+dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: 'https://njoroge.franbethfamily.com', // Change to your frontend URL
+        credentials: true,
+    },
+});
 
-// Global Middlewares
 app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true
+    origin: 'https://njoroge.franbethfamily.com', // Change to your frontend URL
+    credentials: true,
 }));
 app.use(express.json());
 
 // API Routes
-app.use('/api/notes', noteRoutes);            // Learning notes (topic, content)
-app.use('/api/finance', financeRoutes);      // Expense tracker
-app.use('/api/fitness', fitnessRoutes);       // Workout tracker
-
-// health & basic
-app.get('/', (req, res) => res.send({ ok: true, time: new Date().toISOString() }));
-
+app.use('/api/notes', noteRoutes);
+app.use('/api/finance', financeRoutes);
+app.use('/api/fitness', fitnessRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/settings', settingsRoutes);
@@ -38,19 +52,40 @@ app.use('/api/projects', projectsRoutes);
 app.use('/api', learningRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/chat', chatRouter);
+
+// Health & basic
+app.get('/', (req, res) => res.send({ ok: true, time: new Date().toISOString() }));
+
 // Default Root Route
 app.get('/', (req, res) => {
     res.send('🚀 Welcome to the Fullstack API (Fitness + Finance + Notes + Projects + Contacts)');
 });
+
 // 404 handler
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));
+
+// Socket.io chat logic
+io.on('connection', (socket) => {
+    socket.on('join', ({ username }) => handleJoin(socket, username));
+    socket.on('message', (msg) => handleMessage(socket, msg));
+    socket.on('typing', (data) => handleTyping(socket, data));
+    socket.on('disconnect', () => handleDisconnect(socket));
+});
+
 // Sync DB and Start Server
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync({alter: true}) // Use { force: true } to reset tables
+console.log('--- Checking Environment Variables ---');
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? 'Loaded' : 'NOT LOADED');
+console.log('------------------------------------');
+
+sequelize.sync({ alter: true })
     .then(() => {
         console.log('✅ Database connected and synced successfully.');
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`✅ Server running at: http://localhost:${PORT}`);
         });
     })

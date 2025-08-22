@@ -1,9 +1,10 @@
-const express = require('express');
+// backend-repo/routes/courseRoutes.js
+import express from 'express';
+import CourseController from '../controllers/courseController.js';
+
 const router = express.Router();
-const controller = require('../controllers/courseController');
 
+router.get('/', CourseController.getCourses);
+router.post('/', CourseController.addCourse);
 
-router.get('/', controller.getCourses);
-router.post('/', controller.addCourse);
-
-module.exports = router;
+export default router;

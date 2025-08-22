@@ -1,6 +1,6 @@
 // models/Fitness.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db'); // or wherever your sequelize instance is
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js'; // or wherever your sequelize instance is
 
 const Fitness = sequelize.define('Fitness', {
     workout_type: {
@@ -33,4 +33,4 @@ const Fitness = sequelize.define('Fitness', {
   }
 });
 
-module.exports = Fitness; // Make sure you export the model directly
+export default Fitness; // Make sure you export the model directly

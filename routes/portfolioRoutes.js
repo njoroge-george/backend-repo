@@ -1,9 +1,10 @@
-// routes/portfolioRoutes.js
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { getPortfolio, createPortfolio } = require('../controllers/portfolioController');
+import portfolioController from '../controllers/portfolioController.js';
+
+const { getPortfolio, createPortfolio } = portfolioController;
 
 router.get('/', getPortfolio);
 router.post('/', createPortfolio);
 
-module.exports = router;
+export default router;

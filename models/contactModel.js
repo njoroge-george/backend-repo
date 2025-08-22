@@ -1,6 +1,6 @@
 // models/contactModel.js
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/db.js';
 
 const Contact = sequelize.define('Contact', {
   id: {
@@ -40,4 +40,4 @@ const Contact = sequelize.define('Contact', {
   timestamps: false // or true if you have createdAt / updatedAt columns
 });
 
-module.exports = Contact;
+export default Contact;
