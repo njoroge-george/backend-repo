@@ -74,7 +74,7 @@ io.on('connection', (socket) => {
 });
 
 // Sync DB and Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 console.log('--- Checking Environment Variables ---');
 console.log('DB_HOST:', process.env.DB_HOST);
