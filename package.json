@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "build": "echo 'No build needed for backend'",
+    "pm2:start": "pm2 start index.js --name 'myrepo-backend'",
+    "pm2:stop": "pm2 stop myrepo-backend",
+    "pm2:restart": "pm2 restart myrepo-backend"
   },
   "keywords": [],
   "author": "",

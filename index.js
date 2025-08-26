@@ -1,10 +1,17 @@
-// backend-repo/index.js
+﻿// backend-repo/index.js
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
 import { Server } from 'socket.io';
 import sequelize from './config/db.js';
+
+// Configure dotenv ONCE at the top
+dotenv.config();
+
+// Define constants after dotenv
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+const PORT = process.env.PORT || 5001;
 
 // Import routes
 import noteRoutes from './routes/noteRoutes.js';
@@ -18,7 +25,7 @@ import learningRoutes from './routes/learningRoutes.js';
 import recipeRoutes from './routes/recipeRoutes.js';
 import portfolioRoutes from './routes/portfolioRoutes.js';
 import chatRouter from './routes/chatRouter.js';
-import messageRoutes from "./routes/messageRoutes.js"; // <-- Ensure .js is here
+import messageRoutes from "./routes/messageRoutes.js";
 import emailRoutes from './routes/emailRoutes.js';
 import gradeRoutes from './routes/gradeRoutes.js';
 
@@ -30,20 +37,13 @@ import {
     handleDisconnect,
 } from './controllers/chatController.js';
 
-dotenv.config();
-
 const app = express();
 const server = http.createServer(app);
 
-// ------------------------
 // MIDDLEWARES
-// ------------------------
-// ------------------------
-// MIDDLEWARES
-// ------------------------
 const allowedOrigins = [
-    'http://localhost:5173',              // local dev
-    process.env.VITE_API_URL || 'https//:njoroge.franbethfamily.com'        // production domain (from .env)
+    'http://localhost:5173',
+    'https://njoroge.franbethfamily.com'
 ];
 
 app.use(cors({
@@ -59,10 +59,7 @@ app.use(cors({
 
 app.use(express.json());
 
-
-// ------------------------
 // API ROUTES
-// ------------------------
 const apiRoutes = [
     { path: '/api/notes', route: noteRoutes },
     { path: '/api/finance', route: financeRoutes },
@@ -75,7 +72,7 @@ const apiRoutes = [
     { path: '/api/recipes', route: recipeRoutes },
     { path: '/api/portfolio', route: portfolioRoutes },
     { path: '/api/chat', route: chatRouter },
-    { path: '/api/messages', route: messageRoutes }, // <-- Fully integrated
+    { path: '/api/messages', route: messageRoutes },
     { path: '/api/email', route: emailRoutes },
     { path: '/api/grades', route: gradeRoutes },
 ];
@@ -83,14 +80,12 @@ const apiRoutes = [
 apiRoutes.forEach(({ path, route }) => app.use(path, route));
 
 // Health check
-app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));
 
-// ------------------------
 // SOCKET.IO SETUP
-// ------------------------
 const io = new Server(server, {
     cors: { origin: CLIENT_URL, credentials: true },
 });
@@ -117,11 +112,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// ------------------------
 // DATABASE & SERVER START
-// ------------------------
-const PORT = process.env.PORT || 5001;
-
 console.log('--- Environment Variables ---');
 ['DB_HOST', 'DB_USER', 'DB_PASSWORD'].forEach((key) => {
     const val = process.env[key];
