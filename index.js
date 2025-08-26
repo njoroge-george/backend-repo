@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import http from 'http';
 import { Server } from 'socket.io';
 import sequelize from './config/db.js';
+
 // Import routes
 import noteRoutes from './routes/noteRoutes.js';
 import financeRoutes from './routes/financeRoutes.js';
@@ -17,6 +18,11 @@ import learningRoutes from './routes/learningRoutes.js';
 import recipeRoutes from './routes/recipeRoutes.js';
 import portfolioRoutes from './routes/portfolioRoutes.js';
 import chatRouter from './routes/chatRouter.js';
+import messageRoutes from "./routes/messageRoutes.js"; // <-- Ensure .js is here
+import emailRoutes from './routes/emailRoutes.js';
+import gradeRoutes from './routes/gradeRoutes.js';
+
+// Chat controllers
 import {
     handleJoin,
     handleMessage,
@@ -28,67 +34,90 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: 'https://njoroge.franbethfamily.com', // Change to your frontend URL
-        credentials: true,
-    },
-});
 
-app.use(cors({
-    origin: 'https://njoroge.franbethfamily.com', // Change to your frontend URL
-    credentials: true,
-}));
+// ------------------------
+// MIDDLEWARES
+// ------------------------
+const CLIENT_URL = 'http://localhost:5173';
+app.use(cors({ origin: CLIENT_URL, credentials: true }));
 app.use(express.json());
 
-// API Routes
-app.use('/api/notes', noteRoutes);
-app.use('/api/finance', financeRoutes);
-app.use('/api/fitness', fitnessRoutes);
-app.use('/api/contacts', contactRoutes);
-app.use('/api/todos', todoRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/projects', projectsRoutes);
-app.use('/api', learningRoutes);
-app.use('/api/recipes', recipeRoutes);
-app.use('/api/portfolio', portfolioRoutes);
-app.use('/api/chat', chatRouter);
+// ------------------------
+// API ROUTES
+// ------------------------
+const apiRoutes = [
+    { path: '/api/notes', route: noteRoutes },
+    { path: '/api/finance', route: financeRoutes },
+    { path: '/api/fitness', route: fitnessRoutes },
+    { path: '/api/contacts', route: contactRoutes },
+    { path: '/api/todos', route: todoRoutes },
+    { path: '/api/settings', route: settingsRoutes },
+    { path: '/api/projects', route: projectsRoutes },
+    { path: '/api/learning', route: learningRoutes },
+    { path: '/api/recipes', route: recipeRoutes },
+    { path: '/api/portfolio', route: portfolioRoutes },
+    { path: '/api/chat', route: chatRouter },
+    { path: '/api/messages', route: messageRoutes }, // <-- Fully integrated
+    { path: '/api/email', route: emailRoutes },
+    { path: '/api/grades', route: gradeRoutes },
+];
 
-// Health & basic
-app.get('/', (req, res) => res.send({ ok: true, time: new Date().toISOString() }));
+apiRoutes.forEach(({ path, route }) => app.use(path, route));
 
-// Default Root Route
-app.get('/', (req, res) => {
-    res.send('🚀 Welcome to the Fullstack API (Fitness + Finance + Notes + Projects + Contacts)');
-});
+// Health check
+app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ success: false, message: 'Not found' }));
 
-// Socket.io chat logic
-io.on('connection', (socket) => {
-    socket.on('join', ({ username }) => handleJoin(socket, username));
-    socket.on('message', (msg) => handleMessage(socket, msg));
-    socket.on('typing', (data) => handleTyping(socket, data));
-    socket.on('disconnect', () => handleDisconnect(socket));
+// ------------------------
+// SOCKET.IO SETUP
+// ------------------------
+const io = new Server(server, {
+    cors: { origin: CLIENT_URL, credentials: true },
 });
 
-// Sync DB and Start Server
+io.on('connection', (socket) => {
+    console.log('🟢 User connected:', socket.id);
+
+    socket.on('join', async ({ username }) => {
+        try { await handleJoin(socket, username); }
+        catch (err) { console.error('join error:', err); }
+    });
+
+    socket.on('message', async (msg) => {
+        try { await handleMessage(socket, msg); }
+        catch (err) { console.error('message error:', err); }
+    });
+
+    socket.on('typing', (data) => handleTyping(socket, data));
+
+    socket.on('disconnect', async () => {
+        try { await handleDisconnect(socket); }
+        catch (err) { console.error('disconnect error:', err); }
+        console.log('🔴 User disconnected:', socket.id);
+    });
+});
+
+// ------------------------
+// DATABASE & SERVER START
+// ------------------------
 const PORT = process.env.PORT || 5001;
 
-console.log('--- Checking Environment Variables ---');
-console.log('DB_HOST:', process.env.DB_HOST);
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? 'Loaded' : 'NOT LOADED');
-console.log('------------------------------------');
+console.log('--- Environment Variables ---');
+['DB_HOST', 'DB_USER', 'DB_PASSWORD'].forEach((key) => {
+    const val = process.env[key];
+    console.log(`${key}:`, key === 'DB_PASSWORD' ? (val ? 'Loaded' : 'NOT LOADED') : val);
+});
+console.log('-----------------------------');
 
-sequelize.sync({ alter: true })
-    .then(() => {
-        console.log('✅ Database connected and synced successfully.');
-        server.listen(PORT, () => {
-            console.log(`✅ Server running at: http://localhost:${PORT}`);
-        });
-    })
-    .catch((err) => {
+(async () => {
+    try {
+        await sequelize.authenticate();
+        await sequelize.sync({ alter: true });
+        console.log('✅ Database connected and synced.');
+        server.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+    } catch (err) {
         console.error('❌ Failed to connect or sync DB:', err);
-    });
+    }
+})();
