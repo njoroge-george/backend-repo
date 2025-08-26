@@ -38,9 +38,27 @@ const server = http.createServer(app);
 // ------------------------
 // MIDDLEWARES
 // ------------------------
-const CLIENT_URL = 'http://localhost:5173';
-app.use(cors({ origin: CLIENT_URL, credentials: true }));
+// ------------------------
+// MIDDLEWARES
+// ------------------------
+const allowedOrigins = [
+    'http://localhost:5173',              // local dev
+    process.env.VITE_API_URL || 'https//:njoroge.franbethfamily.com'        // production domain (from .env)
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS not allowed'));
+        }
+    },
+    credentials: true
+}));
+
 app.use(express.json());
+
 
 // ------------------------
 // API ROUTES
