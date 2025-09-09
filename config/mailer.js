@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
     secure: false, // use TLS
     auth: {
         user: process.env.EMAIL_USER, // your Gmail
-        pass: process.env.EMAIL_PASS, // Gmail App Password
+        pass: process.env.EMAIL_PASS, // Gmail Index Password
     },
 });
 

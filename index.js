@@ -1,4 +1,4 @@
-﻿// backend-repo/index.js
+﻿// backend-repo/App.js
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -28,6 +28,10 @@ import chatRouter from './routes/chatRouter.js';
 import messageRoutes from "./routes/messageRoutes.js";
 import emailRoutes from './routes/emailRoutes.js';
 import gradeRoutes from './routes/gradeRoutes.js';
+import authRoutes   from "./routes/authRoutes.js";
+import documentRoutes from "./routes/documentRoutes.js";
+import backendcodeRoutes from "./routes/backendcodeRoutes.js";
+import chordRoutes from "./routes/chordRoutes.js";
 
 // Chat controllers
 import {
@@ -75,6 +79,10 @@ const apiRoutes = [
     { path: '/api/messages', route: messageRoutes },
     { path: '/api/email', route: emailRoutes },
     { path: '/api/grades', route: gradeRoutes },
+    { path: '/api/auth', route: authRoutes },
+    { path: '/api/documents', route: documentRoutes },
+    { path: '/api/code', route: backendcodeRoutes },
+    { path: '/api/chords', route: chordRoutes },
 ];
 
 apiRoutes.forEach(({ path, route }) => app.use(path, route));
