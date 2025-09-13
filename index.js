@@ -32,6 +32,7 @@ import authRoutes   from "./routes/authRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import backendcodeRoutes from "./routes/backendcodeRoutes.js";
 import chordRoutes from "./routes/chordRoutes.js";
+import aiChatRoutes from "./routes/aiChatRoutes.js";
 
 // Chat controllers
 import {
@@ -83,6 +84,7 @@ const apiRoutes = [
     { path: '/api/documents', route: documentRoutes },
     { path: '/api/code', route: backendcodeRoutes },
     { path: '/api/chords', route: chordRoutes },
+    { path: '/api/aichat', route: aiChatRoutes },
 ];
 
 apiRoutes.forEach(({ path, route }) => app.use(path, route));
