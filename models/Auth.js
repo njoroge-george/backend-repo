@@ -9,6 +9,11 @@ const User = sequelize.define(
             primaryKey: true,
             autoIncrement: true,
         },
+        role: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: "admin",
+        },
         username: {
             type: DataTypes.STRING,
             unique: true,

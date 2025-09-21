@@ -1,59 +1,96 @@
 // controllers/chatController.js
 import User from '../models/User.js';
 import Message from '../models/Message.js';
+import Room from '../models/Room.js';
 
-export const handleJoin = async (socket, username) => {
+// In-memory online users per room
+const onlineUsers = {}; // { roomId: Set([username1, username2]) }
+
+export const handleJoin = async (socket, { username, roomName }) => {
     try {
-        // Add user if not exists
-        await User.findOrCreate({ where: { username } });
-        socket.username = username;
+        // Ensure room exists
+        const [room] = await Room.findOrCreate({ where: { name: roomName } });
 
-        // Get all users
-        const users = await User.findAll({ attributes: ['username'] });
+        // Ensure user exists
+        const [user] = await User.findOrCreate({ where: { username } });
+        await user.update({ isOnline: true });
 
-        // Get message history (latest 100 messages)
+        // Set socket properties
+        socket.userId = user.id;
+        socket.roomId = room.id;
+        socket.join(room.name);
+
+        // Track online users in memory
+        if (!onlineUsers[room.id]) onlineUsers[room.id] = new Set();
+        onlineUsers[room.id].add(username);
+
+        // Fetch last 100 messages for this room
         const messages = await Message.findAll({
-            order: [['time', 'ASC']],
-            limit: 100,
+            where: { roomId: room.id },
+            include: [User],
+            order: [['createdAt', 'ASC']],
+            limit: 100
         });
 
+        // Send message history and online users
         socket.emit('history', messages);
-        socket.broadcast.emit('users', users.map(u => u.username));
-        socket.emit('users', users.map(u => u.username));
+        socket.to(room.name).emit('users', Array.from(onlineUsers[room.id]));
+        socket.emit('users', Array.from(onlineUsers[room.id]));
+
     } catch (err) {
         console.error('handleJoin error:', err);
     }
 };
 
-export const handleMessage = async (socket, msg) => {
+export const handleMessage = async (socket, { text }) => {
     try {
+        if (!socket.roomId || !socket.userId) return;
+
         // Save message
         const message = await Message.create({
-            username: msg.username,
-            text: msg.text,
+            text,
+            userId: socket.userId,
+            roomId: socket.roomId
         });
 
-        // Broadcast to all clients
-        socket.broadcast.emit('message', message);
-        socket.emit('message', message);
+        // Fetch the message with user info for broadcasting
+        const fullMessage = await Message.findOne({
+            where: { id: message.id },
+            include: [User]
+        });
+
+        // Broadcast to room
+        const room = await Room.findByPk(socket.roomId);
+        socket.to(room.name).emit('message', fullMessage);
+        socket.emit('message', fullMessage);
+
     } catch (err) {
         console.error('handleMessage error:', err);
     }
 };
 
 export const handleTyping = (socket, data) => {
-    socket.broadcast.emit('typing', data);
+    if (!socket.roomId) return;
+    Room.findByPk(socket.roomId).then(room => {
+        if (room) socket.to(room.name).emit('typing', data);
+    });
 };
 
 export const handleDisconnect = async (socket) => {
     try {
-        if (socket.username) {
-            // Remove user from DB
-            await User.destroy({ where: { username: socket.username } });
+        const { userId, roomId } = socket;
+        if (userId && roomId) {
+            // Update user online status
+            await User.update({ isOnline: false }, { where: { id: userId } });
 
-            // Broadcast remaining users
-            const users = await User.findAll({ attributes: ['username'] });
-            socket.broadcast.emit('users', users.map(u => u.username));
+            // Remove from in-memory tracker
+            if (onlineUsers[roomId]) {
+                const user = await User.findByPk(userId);
+                onlineUsers[roomId].delete(user.username);
+
+                const room = await Room.findByPk(roomId);
+                socket.to(room.name).emit('users', Array.from(onlineUsers[roomId]));
+            }
         }
     } catch (err) {
         console.error('handleDisconnect error:', err);

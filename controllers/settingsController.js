@@ -1,49 +1,39 @@
-// backend-repo/controllers/settingsController.js
-import db from '../config/db.js';
+// controllers/settingsController.js
+import Settings from "../models/Settings.js";
 
-const getSettings = async (req, res) => {
+// Get user settings
+export const getSettings = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const [rows] = await db.query('SELECT * FROM settings WHERE user_id = ?', [userId]);
-        if (rows.length === 0) return res.status(404).json({ message: 'ChatPage not found' });
-        res.json(rows[0]);
-    } catch (err) {
-        res.status(500).json({ message: 'Error retrieving settings', error: err.message });
+        const { userId } = req.params;
+        let settings = await Settings.findOne({ where: { userId } });
+
+        if (!settings) {
+            // create default settings if none exist
+            settings = await Settings.create({ userId });
+        }
+
+        res.json({ success: true, data: settings });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
-const updateSettings = async (req, res) => {
+// Update user settings
+export const updateSettings = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { theme, notifications_enabled, language } = req.body;
+        const { userId } = req.params;
+        const updates = req.body;
 
-        await db.query(`
-            INSERT INTO settings (user_id, theme, notifications_enabled, language)
-            VALUES (?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-            theme = VALUES(theme),
-            notifications_enabled = VALUES(notifications_enabled),
-            language = VALUES(language)
-        `, [userId, theme, notifications_enabled, language]);
+        let settings = await Settings.findOne({ where: { userId } });
 
-        res.json({ message: 'ChatPage updated successfully' });
-    } catch (err) {
-        res.status(500).json({ message: 'Error updating settings', error: err.message });
+        if (!settings) {
+            settings = await Settings.create({ userId, ...updates });
+        } else {
+            await settings.update(updates);
+        }
+
+        res.json({ success: true, data: settings });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
-};
-
-const resetSettings = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        await db.query('DELETE FROM settings WHERE user_id = ?', [userId]);
-        res.json({ message: 'ChatPage reset to default' });
-    } catch (err) {
-        res.status(500).json({ message: 'Error resetting settings', error: err.message });
-    }
-};
-
-export default {
-    getSettings,
-    updateSettings,
-    resetSettings
 };

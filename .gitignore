@@ -4,6 +4,8 @@ node_modules/
 # Ignore env files
 .env
 
+# Ignore env production files
+.env.production
 # Ignore logs
 *.log
 

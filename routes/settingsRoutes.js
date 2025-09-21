@@ -1,14 +1,13 @@
-import express from 'express';
+// routes/settingsRoutes.js
+import express from "express";
+import { getSettings, updateSettings } from "../controllers/settingsController.js";
+
 const router = express.Router();
 
-import settingsController from '../controllers/settingsController.js';
+// GET user settings
+router.get("/:userId", getSettings);
 
-const { getSettings, updateSettings, resetSettings } = settingsController;
-
-// Use getSettings, updateSettings, resetSettings in your routes as before
-
-router.get('/', getSettings);
-router.put('/', updateSettings);
-router.delete('/', resetSettings);
+// UPDATE user settings
+router.put("/:userId", updateSettings);
 
 export default router;
