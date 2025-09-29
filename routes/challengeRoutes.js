@@ -1,19 +1,29 @@
-import express from 'express';
+import express from "express";
 import {
-  getAllChallenges,
-  getChallengeById,
   createChallenge,
-  updateChallenge,
+  getChallenges,
+  getChallengeStats,
+  markSolved,
   deleteChallenge,
-} from '../controllers/challengeController.js';
-import { authenticate, authorize } from '../middleware/authMiddleware.js';
+} from "../controllers/challengeController.js";
+
+import { authenticate, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get('/', authenticate, getAllChallenges);
-router.get('/:id', authenticate, getChallengeById);
-router.post('/', authenticate, authorize('admin'), createChallenge);
-router.put('/:id', authenticate, authorize('admin'), updateChallenge);
-router.delete('/:id', authenticate, authorize('admin'), deleteChallenge);
+// 📄 Get all challenges
+router.get("/", authenticate, getChallenges);
+
+// 📊 Get stats for a specific challenge
+router.get("/:id/stats", authenticate, getChallengeStats);
+
+// ➕ Create a new challenge (admin only)
+router.post("/", authenticate, authorize("admin"), createChallenge);
+
+// ✅ Mark challenge as solved (any authenticated user)
+router.post("/solve", authenticate, markSolved);
+
+// ❌ Delete challenge (admin only)
+router.delete("/:id", authenticate, authorize("admin"), deleteChallenge);
 
 export default router;

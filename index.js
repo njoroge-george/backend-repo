@@ -4,16 +4,17 @@ import cors from "cors";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
+import path from "path";
 import sequelize from "./config/db.js";
 
-// Load env variables
+// Load environment variables
 dotenv.config();
 
 // Constants
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const PORT = process.env.PORT || 5001;
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
-// Import routes
+// ================== ROUTES ================== //
 import noteRoutes from "./routes/noteRoutes.js";
 import financeRoutes from "./routes/financeRoutes.js";
 import fitnessRoutes from "./routes/fitnessRoutes.js";
@@ -33,204 +34,186 @@ import documentRoutes from "./routes/documentRoutes.js";
 import backendcodeRoutes from "./routes/backendcodeRoutes.js";
 import chordRoutes from "./routes/chordRoutes.js";
 import aiChatRoutes from "./routes/aiChatRoutes.js";
-import accountRoutes from "./routes/accountRoutes.js"; // ATM routes
+import roomRoutes from "./routes/roomRoutes.js";
 import coderRoutes from "./routes/coderRoutes.js";
 import challengeRoutes from "./routes/challengeRoutes.js";
 import submissionRoutes from "./routes/submissionRoutes.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import discussionRoutes from "./routes/discussionRoutes.js";
 
-
-
-// Chat controllers
+// ================== CONTROLLERS ================== //
 import {
-    handleJoin,
-    handleMessage,
-    handleTyping,
-    handleDisconnect,
+  handleJoin,
+  handleMessage,
+  handleTyping,
+  handleDisconnect,
 } from "./controllers/chatController.js";
 
+// ================== EXPRESS APP ================== //
 const app = express();
 const server = http.createServer(app);
 
-// MIDDLEWARES
+// ================== MIDDLEWARES ================== //
 const allowedOrigins = [
-    "http://localhost:5173",
-    "https://njoroge.franbethfamily.com",
+  "http://localhost:5173",
+  "https://njoroge.franbethfamily.com",
 ];
 
-// ⚡ Initialize Socket.IO with error handling
-const io = new Server(server, {
-    cors: { 
-        origin: allowedOrigins, 
-        credentials: true, 
-        methods: ["GET", "POST"],
-        allowedHeaders: ["Content-Type", "Authorization"]
-    },
-    handlePreflightRequest: (req, res) => {
-        res.writeHead(200, {
-            "Access-Control-Allow-Origin": allowedOrigins,
-            "Access-Control-Allow-Methods": "GET,POST",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            "Access-Control-Allow-Credentials": true
-        });
-        res.end();
-    }
-});
-
-// Enhanced CORS middleware with error handling
-app.use(cors({
+app.use(
+  cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            const msg = `CORS policy does not allow access from origin: ${origin}`;
-            console.error(`🚫 CORS Error: ${msg}`);
-            return callback(new Error(msg));
-        }
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      const msg = `CORS policy does not allow access from origin: ${origin}`;
+      console.error(`🚫 CORS Error: ${msg}`);
+      return callback(new Error(msg));
     },
     credentials: true,
-    optionsSuccessStatus: 200,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200,
+  })
+);
 
-// Body parser middleware with size limits
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// CORS error handler
+// Handle CORS errors
 app.use((err, req, res, next) => {
-    if (err.message.includes('CORS')) {
-        res.status(403).json({
-            error: 'CORS Error',
-            message: err.message
-        });
-    } else {
-        next(err);
-    }
+  if (err.message.includes("CORS")) {
+    res.status(403).json({ error: "CORS Error", message: err.message });
+  } else {
+    next(err);
+  }
 });
 
-// ROUTES
-const apiRoutes = [
-    { path: "/api/notes", route: noteRoutes },
-    { path: "/api/finance", route: financeRoutes },
-    { path: "/api/fitness", route: fitnessRoutes },
-    { path: "/api/contacts", route: contactRoutes },
-    { path: "/api/todos", route: todoRoutes },
-    { path: "/api/settings", route: settingsRoutes },
-    { path: "/api/projects", route: projectsRoutes },
-    { path: "/api/learning", route: learningRoutes },
-    { path: "/api/recipes", route: recipeRoutes },
-    { path: "/api/portfolio", route: portfolioRoutes },
-    { path: "/api/chat", route: chatRouter },
-    { path: "/api/messages", route: messageRoutes },
-    { path: "/api/email", route: emailRoutes },
-    { path: "/api/grades", route: gradeRoutes },
-    { path: "/api/auth", route: authRoutes },
-    { path: "/api/documents", route: documentRoutes },
-    { path: "/api/code", route: backendcodeRoutes },
-    { path: "/api/chords", route: chordRoutes },
-    { path: "/api/aichat", route: aiChatRoutes },
-    { path: "/api/accounts", route: accountRoutes },
-   { path: "/api/coders", route: coderRoutes },
-{ path: "/api/challenges", route: challengeRoutes },
-{ path: "/api/submissions", route: submissionRoutes },
+// ================== ROUTES REGISTRATION ================== //
 
+const apiRoutes = [
+  { path: "/api/notes", route: noteRoutes },
+  { path: "/api/finance", route: financeRoutes },
+  { path: "/api/fitness", route: fitnessRoutes },
+  { path: "/api/contacts", route: contactRoutes },
+  { path: "/api/todos", route: todoRoutes },
+  { path: "/api/settings", route: settingsRoutes },
+  { path: "/api/projects", route: projectsRoutes },
+  { path: "/api/learning", route: learningRoutes },
+  { path: "/api/recipes", route: recipeRoutes },
+  { path: "/api/portfolio", route: portfolioRoutes },
+  { path: "/api/chat", route: chatRouter },
+  { path: "/api/messages", route: messageRoutes },
+  { path: "/api/email", route: emailRoutes },
+  { path: "/api/grades", route: gradeRoutes },
+  { path: "/api/auth", route: authRoutes },
+  { path: "/api/documents", route: documentRoutes },
+  { path: "/api/code", route: backendcodeRoutes },
+  { path: "/api/chords", route: chordRoutes },
+  { path: "/api/aichat", route: aiChatRoutes },
+  { path: "/api/rooms", route: roomRoutes },
+  { path: "/api/coders", route: coderRoutes },
+  { path: "/api/challenges", route: challengeRoutes },
+  { path: "/api/submissions", route: submissionRoutes },
+  { path: "/api/leaderboard", route: leaderboardRoutes },
+  { path: "/api/discussions", route: discussionRoutes },
 ];
 
 apiRoutes.forEach(({ path, route }) => app.use(path, route));
 
-// Health check
-app.get("/api/health", (req, res) =>
-    res.json({ ok: true, time: new Date().toISOString() })
-);
+// ================== HEALTH CHECK & 404 ================== //
+app.get("/api/health", (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.use((req, res) => res.status(404).json({ success: false, message: "Not found" }));
 
-// 404 handler
-app.use((req, res) =>
-    res.status(404).json({ success: false, message: "Not found" })
-);
+// ================== SOCKET.IO ================== //
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  },
+});
 
-// ================== SOCKET.IO NAMESPACES ================== //
-
-// Chat namespace
+// --- CHAT NAMESPACE ---
 const chatNamespace = io.of("/chat");
 chatNamespace.on("connection", (socket) => {
-    console.log("🟢 User connected to chat:", socket.id);
+  console.log("🟢 User connected to chat:", socket.id);
 
-    socket.on("join", async ({ username, roomName }) => {
-        try {
-            await handleJoin(socket, { username, roomName });
-        } catch (err) {
-            console.error("chat join error:", err);
-        }
-    });
-
-    socket.on("message", async (msg) => {
-        try {
-            await handleMessage(socket, msg);
-        } catch (err) {
-            console.error("chat message error:", err);
-        }
-    });
-
-    socket.on("typing", (data) => handleTyping(socket, data));
-
-    socket.on("disconnect", async () => {
-        try {
-            await handleDisconnect(socket);
-        } catch (err) {
-            console.error("chat disconnect error:", err);
-        }
-        console.log("🔴 User disconnected from chat:", socket.id);
-    });
+  socket.on("join", async ({ username, roomName }) => handleJoin(socket, { username, roomName }));
+  socket.on("message", async (msg) => handleMessage(socket, msg));
+  socket.on("typing", (data) => handleTyping(socket, data));
+  socket.on("disconnect", async () => handleDisconnect(socket));
 });
 
-// Coding namespace
-const codingNamespace = io.of("/coding");
-app.set("codingNamespace", codingNamespace);
+// // --- VOICE / DISCUSSION NAMESPACE ---
+// io.of("/voice").on("connection", (socket) => {
+//   console.log("🎙️ User connected to voice/discussion:", socket.id);
 
-codingNamespace.on("connection", (socket) => {
-    console.log("🟢 User connected to coding:", socket.id);
+//   socket.on("joinRoom", async ({ coderId, roomId }) => {
+//     const coder = await Coder.findByPk(coderId);
+//     if (!coder) return socket.emit("error", { message: "Coder not found" });
 
-    socket.on("joinChallenge", ({ coderId, challengeId }) => {
-        socket.join(`challenge_${challengeId}`);
-        console.log(`${coderId} joined challenge ${challengeId}`);
-    });
+//     const roomName = `room-${roomId}`;
+//     socket.join(roomName);
+//     socket.data = { coder, roomName };
 
-    socket.on("submitCode", (submission) => {
-        // Broadcast new submission to others in the same challenge room
-        codingNamespace
-            .to(`challenge_${submission.challengeId}`)
-            .emit("newSubmission", submission);
-    });
+//     io.of("/voice").to(roomName).emit("systemMessage", { message: `${coder.name} joined the room` });
+//     io.of("/voice").to(roomName).emit("roomUpdate", await getParticipants(roomName, io.of("/voice")));
+//   });
 
-    socket.on("disconnect", () => {
-        console.log("🔴 User disconnected from coding:", socket.id);
-    });
-});
+//   socket.on("leaveRoom", () => leaveRoom(socket, io.of("/voice")));
+//   socket.on("toggleMute", ({ muted }) => toggleMute(socket, muted, io.of("/voice")));
+//   socket.on("typing", () => sendTyping(socket, io.of("/voice")));
+//   socket.on("stopTyping", () => stopTyping(socket, io.of("/voice")));
+//   socket.on("message", ({ text }) => sendMessage(socket, text, io.of("/voice")));
+//   socket.on("disconnect", () => leaveRoom(socket, io.of("/voice")));
+// });
 
-// ================== DATABASE & SERVER START ================== //
-console.log("--- Environment Variables ---");
-["DB_HOST", "DB_USER", "DB_PASSWORD"].forEach((key) => {
-    const val = process.env[key];
-    console.log(
-        `${key}:`,
-        key === "DB_PASSWORD" ? (val ? "Loaded" : "NOT LOADED") : val
-    );
-});
-console.log("-----------------------------");
+// ================== SOCKET HELPERS ================== //
+async function getParticipants(roomName, namespace) {
+  const clients = await namespace.in(roomName).fetchSockets();
+  return clients.map((s) => s.data?.coder || { id: s.id, name: "Unknown" });
+}
 
+function leaveRoom(socket, namespace) {
+  const { coder, roomName } = socket.data || {};
+  if (!coder || !roomName) return;
+
+  socket.leave(roomName);
+  namespace.to(roomName).emit("systemMessage", { message: `${coder.name} left the room` });
+  namespace.to(roomName).emit("roomUpdate", Array.from(namespace.in(roomName).sockets.keys()));
+  socket.data = null;
+}
+
+function toggleMute(socket, muted, namespace) {
+  if (!socket.data?.coder || !socket.data?.roomName) return;
+  socket.data.coder.muted = muted;
+  namespace.to(socket.data.roomName).emit("muteUpdate", socket.data.coder);
+}
+
+function sendTyping(socket, namespace) {
+  if (!socket.data?.coder || !socket.data?.roomName) return;
+  socket.to(socket.data.roomName).emit("typing", `${socket.data.coder.name} is typing...`);
+}
+
+function stopTyping(socket, namespace) {
+  if (!socket.data?.roomName) return;
+  socket.to(socket.data.roomName).emit("typing", "");
+}
+
+function sendMessage(socket, text, namespace) {
+  if (!socket.data?.coder || !socket.data?.roomName) return;
+  const msg = { user: socket.data.coder.name, text, timestamp: new Date() };
+  namespace.to(socket.data.roomName).emit("message", msg);
+}
+
+// ================== START SERVER ================== //
 (async () => {
-    try {
-        await sequelize.authenticate();
-        await sequelize.sync({ alter: true });
-        console.log("✅ Database connected and synced.");
-        server.listen(PORT, () =>
-            console.log(`✅ Server running at http://localhost:${PORT}`)
-        );
-    } catch (err) {
-        console.error("❌ Failed to connect or sync DB:", err);
-    }
+  try {
+    await sequelize.authenticate();
+   sequelize.sync({ alter: true }); // only in dev!
+    console.log("✅ Database connected.");
+    server.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+  } catch (err) {
+    console.error("❌ DB connection error:", err);
+  }
 })();

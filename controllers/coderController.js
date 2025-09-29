@@ -1,23 +1,45 @@
-import Coder from '../models/Coder.js';
+import Coder from "../models/Coder.js";
+import Room from "../models/Room.js";
 
-export const createCoder = async (req, res) => {
+export const addCoder = async (req, res) => {
   try {
-    const { name, email } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Name and email are required.' });
-
-    const coder = await Coder.create({ name, email });
-    res.status(201).json(coder);
+    const { name, avatar, roomId } = req.body;
+    const coder = await Coder.create({ name, avatar, RoomId: roomId });
+    res.json({ success: true, data: coder });
   } catch (err) {
-    console.error('Error creating coder:', err);
-    res.status(500).json({ error: 'Server error while creating coder.' });
+    res.status(500).json({ error: err.message });
   }
 };
 
+export const toggleMute = async (req, res) => {
+  try {
+    const coder = await Coder.findByPk(req.params.id);
+    if (!coder) return res.status(404).json({ error: "Coder not found" });
+
+    coder.muted = !coder.muted;
+    await coder.save();
+
+    res.json({ success: true, data: coder });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteCoder = async (req, res) => {
+  try {
+    await Coder.destroy({ where: { id: req.params.id } });
+    res.json({ success: true, message: "Coder removed" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ADD THIS FUNCTION:
 export const getCoders = async (req, res) => {
   try {
     const coders = await Coder.findAll();
-    res.json(coders);
+    res.json({ success: true, data: coders });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch coders.' });
+    res.status(500).json({ error: err.message });
   }
 };

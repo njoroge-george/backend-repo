@@ -23,6 +23,11 @@ const User = sequelize.define(
             type: DataTypes.STRING,
             allowNull: false,
         },
+        name: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        
+        },
     },
     {
         tableName: "user", // lowercase is common in MySQL

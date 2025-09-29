@@ -4,44 +4,64 @@ import Coder from "./Coder.js";
 import Challenge from "./Challenge.js";
 
 const Submission = sequelize.define(
-    "Submission",
-    {
-        code: {
-            type: DataTypes.TEXT,
-            allowNull: false,
-        },
-        status: {
-            type: DataTypes.ENUM("Pending", "Accepted", "Rejected"),
-            defaultValue: "Pending",
-        },
-        passedTests: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0,
-        },
-        totalTests: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0,
-        },
-        score: {
-            type: DataTypes.FLOAT,
-            defaultValue: 0.0,
-        },
-        evaluatedAt: {
-            type: DataTypes.DATE,
-            allowNull: true,
-        },
+  "Submission",
+  {
+    code: {
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
-    {
-        tableName: "submission",
-        timestamps: true,
-    }
+    language: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM("pending", "success", "fail", "accepted", "rejected"),
+      defaultValue: "pending",
+    },
+    runtime: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+    },
+    passedTests: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    totalTests: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    score: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    feedback: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    reviewedBy: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    reviewedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    evaluatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+  },
+  {
+    tableName: "submissions",
+    timestamps: true,
+  }
 );
 
-// Associations
-Coder.hasMany(Submission, { foreignKey: "coderId" });
-Submission.belongsTo(Coder, { foreignKey: "coderId" });
+// 🔗 Associations
+Coder.hasMany(Submission);
+Submission.belongsTo(Coder);
 
-Challenge.hasMany(Submission, { foreignKey: "challengeId" });
-Submission.belongsTo(Challenge, { foreignKey: "challengeId" });
+Challenge.hasMany(Submission);
+Submission.belongsTo(Challenge);
 
 export default Submission;

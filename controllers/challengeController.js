@@ -1,83 +1,152 @@
-import Challenge from '../models/Challenge.js';
-import Coder from '../models/Coder.js';
+import Challenge from "../models/Challenge.js";
+import Room from "../models/Room.js";
+import Coder from "../models/Coder.js";
 
-export const getAllChallenges = async (req, res) => {
-  try {
-    const { status } = req.query;
-    const where = status ? { status } : {};
+let io;
 
-    const challenges = await Challenge.findAll({ where });
-    res.json(challenges);
-  } catch (err) {
-    console.error('❌ Error fetching challenges:', err);
-    res.status(500).json({ error: 'Failed to fetch challenges.' });
-  }
+export const setSocket = (socketIO) => {
+  io = socketIO;
 };
 
-export const getChallengeById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const challenge = await Challenge.findByPk(id);
-
-    if (!challenge) return res.status(404).json({ error: 'Challenge not found.' });
-    res.json(challenge);
-  } catch (err) {
-    console.error('❌ Error fetching challenge:', err);
-    res.status(500).json({ error: 'Failed to fetch challenge.' });
-  }
-};
-
+// ➕ Create Challenge
+// ➕ Create Challenge
 export const createChallenge = async (req, res) => {
   try {
-    const { title, description, difficulty, starterCode, tags, status, createdBy } = req.body;
+    const {
+      title,
+      description,
+      testcase,
+      roomId,
+      difficulty = "easy",
+      tags = [],
+    } = req.body;
 
-    if (!title || !description || !createdBy) {
-      return res.status(400).json({ error: 'Title, description, and creator are required.' });
+    // 🔒 Validate required fields
+    if (!title || !description || !testcase) {
+      return res.status(400).json({ error: "Missing required fields." });
     }
 
+    // 🔒 Validate RoomId
+    const resolvedRoomId = roomId === "default" ? 1 : parseInt(roomId, 10);
+    if (!Number.isInteger(resolvedRoomId)) {
+      return res.status(400).json({ error: "Invalid RoomId." });
+    }
+
+    // ✅ Create challenge
     const challenge = await Challenge.create({
       title,
       description,
+      testcase,
       difficulty,
-      starterCode,
       tags,
-      status,
-      createdBy,
+      roomId: resolvedRoomId,
     });
 
-    res.status(201).json({ message: 'Challenge created.', challenge });
+    // 📡 Emit socket event
+    if (io) {
+      io.to(`room-${resolvedRoomId}`).emit("challengeCreated", challenge);
+    }
+
+    res.json({ success: true, data: challenge });
   } catch (err) {
-    console.error('❌ Error creating challenge:', err);
-    res.status(500).json({ error: 'Failed to create challenge.' });
+    console.error("Create challenge error:", err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-export const updateChallenge = async (req, res) => {
+// 📄 Get all challenges with room + coders
+export const getChallenges = async (req, res) => {
+  try {
+    const challenges = await Challenge.findAll({
+      include: [
+        { model: Room, attributes: ["id", "name"] },
+        { model: Coder, attributes: ["id", "name"] },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.json({ success: true, data: challenges });
+  } catch (err) {
+    console.error("Fetch challenges error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// 📊 Get challenge stats
+export const getChallengeStats = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
 
     const challenge = await Challenge.findByPk(id);
-    if (!challenge) return res.status(404).json({ error: 'Challenge not found.' });
+    if (!challenge) {
+      return res.status(404).json({ error: "Challenge not found." });
+    }
 
-    await challenge.update(updates);
-    res.json({ message: 'Challenge updated.', challenge });
+    const total = await challenge.countCoders();
+    const accepted = await challenge.countCoders({ where: { status: "Accepted" } }); // optional if status is tracked
+    const rate = total ? (accepted / total) * 100 : 0;
+
+    res.json({
+      challengeId: id,
+      attempts: challenge.attempts,
+      successRate: challenge.successRate,
+      totalSolvers: total,
+      acceptedSolvers: accepted,
+    });
   } catch (err) {
-    console.error('❌ Error updating challenge:', err);
-    res.status(500).json({ error: 'Failed to update challenge.' });
+    console.error("Stats error:", err);
+    res.status(500).json({ error: "Failed to fetch challenge stats." });
   }
 };
 
+// ✅ Mark challenge as solved
+export const markSolved = async (req, res) => {
+  try {
+    const { coderId, challengeId } = req.body;
+
+    const challenge = await Challenge.findByPk(challengeId);
+    const coder = await Coder.findByPk(coderId);
+
+    if (!challenge || !coder) {
+      return res.status(404).json({ error: "Coder or Challenge not found" });
+    }
+
+    await challenge.addCoder(coder);
+
+    challenge.attempts += 1;
+    await challenge.save();
+
+    if (io) {
+      io.emit("challengeSolved", {
+        challengeId,
+        coder: { id: coder.id, name: coder.name },
+      });
+    }
+
+    res.json({ success: true, message: "Challenge marked as solved" });
+  } catch (err) {
+    console.error("Mark solved error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ❌ Delete challenge
 export const deleteChallenge = async (req, res) => {
   try {
-    const { id } = req.params;
-    const challenge = await Challenge.findByPk(id);
-    if (!challenge) return res.status(404).json({ error: 'Challenge not found.' });
+    const challenge = await Challenge.findByPk(req.params.id);
+    if (!challenge) {
+      return res.status(404).json({ error: "Challenge not found" });
+    }
 
     await challenge.destroy();
-    res.json({ message: 'Challenge deleted.' });
+
+    if (io) {
+      io.emit("challengeDeleted", { id: req.params.id });
+    }
+
+    res.json({ success: true, message: "Challenge deleted" });
   } catch (err) {
-    console.error('❌ Error deleting challenge:', err);
-    res.status(500).json({ error: 'Failed to delete challenge.' });
+    console.error("Delete challenge error:", err);
+    res.status(500).json({ error: err.message });
   }
 };

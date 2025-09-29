@@ -1,10 +1,11 @@
-import express from 'express';
-import { createCoder, getCoders } from '../controllers/coderController.js';
-import { authenticate } from '../middleware/authMiddleware.js';
+import express from "express";
+import { addCoder, toggleMute, deleteCoder, getCoders } from "../controllers/coderController.js";
 
 const router = express.Router();
 
-router.post('/', createCoder); // Public registration
-router.get('/', authenticate, getCoders); // Protected
+router.get("/", getCoders); // <-- This enables GET /api/coders
+router.post("/", addCoder);
+router.patch("/:id/mute", toggleMute);
+router.delete("/:id", deleteCoder);
 
 export default router;

@@ -1,34 +1,36 @@
-import Submission from '../models/Submission.js';
-import Coder from '../models/Coder.js';
-import Challenge from '../models/Challenge.js';
+import Submission from "../models/Submission.js";
+import Coder from "../models/Coder.js";
+import Challenge from "../models/Challenge.js";
 
-// Submit a new code submission
+// 🔌 Socket namespace reference
+let io;
+export const setSocket = (socketIO) => {
+  io = socketIO;
+};
+
+// 🚀 Submit code
 export const submitCode = async (req, res) => {
   try {
     const { coderId, challengeId, code, language } = req.body;
     if (!coderId || !challengeId || !code || !language) {
-      return res.status(400).json({ error: 'All fields are required.' });
+      return res.status(400).json({ error: "All fields are required." });
     }
 
-    // Verify that the coder exists
-    const coder = await Coder.findByPk(coderId);
-    if (!coder) {
-      return res.status(400).json({ error: 'Invalid coderId: does not exist.' });
+    const [coder, challenge] = await Promise.all([
+      Coder.findByPk(coderId),
+      Challenge.findByPk(challengeId),
+    ]);
+
+    if (!coder || !challenge) {
+      return res.status(404).json({ error: "Coder or Challenge not found." });
     }
 
-    // Verify that the challenge exists
-    const challenge = await Challenge.findByPk(challengeId);
-    if (!challenge) {
-      return res.status(400).json({ error: 'Invalid challengeId: does not exist.' });
-    }
-
-    // Simulate test results
+    // 🧪 Simulate test results
     const totalTests = 5;
-    const passedTests = Math.floor(Math.random() * (totalTests + 1)); // 0 to totalTests
+    const passedTests = Math.floor(Math.random() * (totalTests + 1));
     const score = Math.round((passedTests / totalTests) * 100);
-    const status = passedTests === totalTests ? 'Accepted' : 'Rejected';
+    const status = passedTests === totalTests ? "Accepted" : "Rejected";
 
-    // Create submission record
     const submission = await Submission.create({
       coderId,
       challengeId,
@@ -41,20 +43,21 @@ export const submitCode = async (req, res) => {
       evaluatedAt: new Date(),
     });
 
-    // Fetch the full submission with associated data
     const fullSubmission = await Submission.findOne({
       where: { id: submission.id },
-      include: [Coder, Challenge],
+      include: [
+        { model: Coder, attributes: ["id", "name"] },
+        { model: Challenge, attributes: ["id", "title"] },
+      ],
     });
 
-    // Emit real-time event if namespace exists
-    const codingNamespace = req.app.get('codingNamespace');
-    if (codingNamespace) {
-      codingNamespace.to(`challenge_${challengeId}`).emit('newSubmission', fullSubmission);
+    // 🔔 Emit to challenge room
+    if (io) {
+      io.to(`challenge_${challengeId}`).emit("newSubmission", fullSubmission);
     }
 
     res.status(201).json({
-      message: 'Submission received.',
+      message: "Submission received.",
       passedTests,
       totalTests,
       score,
@@ -62,68 +65,70 @@ export const submitCode = async (req, res) => {
       submission: fullSubmission,
     });
   } catch (err) {
-    console.error('❌ Error submitting code:', err);
-    res.status(500).json({ error: 'Failed to submit code.' });
+    console.error("❌ Error submitting code:", err);
+    res.status(500).json({ error: "Failed to submit code." });
   }
 };
 
-// Get all submissions by a specific coder
+// 📄 Get submissions by coder
 export const getSubmissionsByCoder = async (req, res) => {
   try {
     const { coderId } = req.params;
     const submissions = await Submission.findAll({
       where: { coderId },
-      include: [Challenge],
-      order: [['createdAt', 'DESC']],
+      include: [{ model: Challenge, attributes: ["id", "title"] }],
+      order: [["createdAt", "DESC"]],
     });
     res.json(submissions);
   } catch (err) {
-    console.error('❌ Error fetching coder submissions:', err);
-    res.status(500).json({ error: 'Failed to fetch submissions.' });
+    console.error("❌ Error fetching coder submissions:", err);
+    res.status(500).json({ error: "Failed to fetch submissions." });
   }
 };
 
-// Get all submissions for a specific challenge
+// 📄 Get submissions by challenge
 export const getSubmissionsByChallenge = async (req, res) => {
   try {
     const { challengeId } = req.params;
     const submissions = await Submission.findAll({
       where: { challengeId },
-      include: [Coder],
-      order: [['createdAt', 'DESC']],
+      include: [{ model: Coder, attributes: ["id", "name"] }],
+      order: [["createdAt", "DESC"]],
     });
     res.json(submissions);
   } catch (err) {
-    console.error('❌ Error fetching challenge submissions:', err);
-    res.status(500).json({ error: 'Failed to fetch submissions.' });
+    console.error("❌ Error fetching challenge submissions:", err);
+    res.status(500).json({ error: "Failed to fetch submissions." });
   }
 };
 
-// Delete a submission by ID
+// ❌ Delete submission
 export const deleteSubmission = async (req, res) => {
   try {
     const { id } = req.params;
     const submission = await Submission.findByPk(id);
     if (!submission) {
-      return res.status(404).json({ error: 'Submission not found.' });
+      return res.status(404).json({ error: "Submission not found." });
     }
 
     await submission.destroy();
-    res.json({ message: 'Submission deleted successfully.' });
+    res.json({ message: "Submission deleted successfully." });
   } catch (err) {
-    console.error('❌ Error deleting submission:', err);
-    res.status(500).json({ error: 'Failed to delete submission.' });
+    console.error("❌ Error deleting submission:", err);
+    res.status(500).json({ error: "Failed to delete submission." });
   }
 };
 
-// Get analytics data
+// 📊 Get analytics
 export const getAnalytics = async (req, res) => {
   try {
-    const totalSubmissions = await Submission.count();
-    const acceptedCount = await Submission.count({ where: { status: 'Accepted' } });
-    const rejectedCount = totalSubmissions - acceptedCount;
+    const [totalSubmissions, acceptedCount, totalScores] = await Promise.all([
+      Submission.count(),
+      Submission.count({ where: { status: "Accepted" } }),
+      Submission.sum("score"),
+    ]);
 
-    const totalScores = await Submission.sum('score');
+    const rejectedCount = totalSubmissions - acceptedCount;
     const avgScore = totalSubmissions ? totalScores / totalSubmissions : 0;
 
     res.json({
@@ -133,7 +138,77 @@ export const getAnalytics = async (req, res) => {
       averageScore: avgScore,
     });
   } catch (err) {
-    console.error('❌ Error fetching analytics:', err);
-    res.status(500).json({ error: 'Failed to fetch analytics.' });
+    console.error("❌ Error fetching analytics:", err);
+    res.status(500).json({ error: "Failed to fetch analytics." });
   }
 };
+
+export const getSubmissionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const submission = await Submission.findOne({
+      where: { id },
+      include: [
+        { model: Coder, attributes: ["id", "name"] },
+        { model: Challenge, attributes: ["id", "title"] },
+      ],
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: "Submission not found." });
+    }
+
+    res.json(submission);
+  } catch (err) {
+    console.error("❌ Error fetching submission:", err);
+    res.status(500).json({ error: "Failed to fetch submission." });
+  }
+};
+
+export const reviewSubmission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { feedback, reviewedBy } = req.body;
+
+    const submission = await Submission.findByPk(id);
+    if (!submission) {
+      return res.status(404).json({ error: "Submission not found." });
+    }
+
+    submission.feedback = feedback;
+    submission.reviewedBy = reviewedBy;
+    submission.reviewedAt = new Date();
+    await submission.save();
+
+    res.json({ message: "Submission reviewed.", submission });
+  } catch (err) {
+    console.error("❌ Error reviewing submission:", err);
+    res.status(500).json({ error: "Failed to review submission." });
+  }
+};
+
+export const retrySubmission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const original = await Submission.findByPk(id);
+
+    if (!original) {
+      return res.status(404).json({ error: "Original submission not found." });
+    }
+
+    const retry = await Submission.create({
+      coderId: original.coderId,
+      challengeId: original.challengeId,
+      code: original.code,
+      language: original.language,
+      status: "Pending",
+      evaluatedAt: null,
+    });
+
+    res.status(201).json({ message: "Retry created.", submission: retry });
+  } catch (err) {
+    console.error("❌ Error retrying submission:", err);
+    res.status(500).json({ error: "Failed to retry submission." });
+  }
+};
+
